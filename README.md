@@ -1,151 +1,195 @@
-<div align="center">
-  <br />
-    <a href="https://youtu.be/JiwTGGGIhDs" target="_blank">
-      <img src="public/readme/readme-hero.webp" alt="Project Banner">
-    </a>
-  <br />
+# Strux
 
-  <div>
-<img src="https://img.shields.io/badge/-React-61DAFB?style=for-the-badge&logo=React&logoColor=black" />
-<img src="https://img.shields.io/badge/-Typescript-3178C6?style=for-the-badge&logo=Typescript&logoColor=white" />
-<img src="https://img.shields.io/badge/-Tailwind-06B6D4?style=for-the-badge&logo=Tailwind-CSS&logoColor=white" />
-<img src="https://img.shields.io/badge/-Gemini-4285F4?style=for-the-badge&logo=Google-Gemini&logoColor=white" /><br/>
-<img src="https://img.shields.io/badge/-Claude-D97757?style=for-the-badge&logo=Anthropic&logoColor=white" />
-<img src="https://img.shields.io/badge/-Gemini-4285F4?style=for-the-badge&logo=Google-Gemini&logoColor=white" />
-<img src="https://img.shields.io/badge/-CodeRabbit-FF6600?style=for-the-badge&logo=CodeRabbit&logoColor=white" />
+Strux is an architectural visualization web app built with React Router 7, React, TypeScript, and Tailwind CSS.
 
-  </div>
+It lets you:
 
-  <h3 align="center">Strux | AI-powered Architectural Visualization App</h3>
+- upload a 2D floor plan
+- preview the uploaded image before generation
+- generate a rendered result through a server-side Gemini image route
+- compare before/after outputs on a dedicated project page
+- browse featured static case studies and locally saved projects
 
-   <div align="center">
-     Build this project step by step with our detailed tutorial on <a href="https://www.youtube.com/watch?v=XUkNR-JfHwo" target="_blank"><b>JavaScript Mastery</b></a> YouTube. Join the JSM family!
-    </div>
-</div>
+## Stack
 
-## 📋 <a name="table">Table of Contents</a>
+- React 19
+- React Router 7 with SSR
+- TypeScript
+- Tailwind CSS 4
+- `react-compare-slider`
+- Gemini image generation via a server route
 
-1. ✨ [Introduction](#introduction)
-2. ⚙️ [Tech Stack](#tech-stack)
-3. 🔋 [Features](#features)
-4. 🤸 [Quick Start](#quick-start)
-5. 🔗 [Assets](#links)
-6. 🚀 [More](#more)
+## Current Behavior
 
-## 🚨 Tutorial
+There are two project sources in the app:
 
-This repository contains the code corresponding to an in-depth tutorial available on our YouTube channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>.
+- Featured demo projects
+  - Static showcase entries loaded from local assets in `public/uploads/assets`
+  - Used for the homepage project gallery and detail-page comparisons
+- User-generated local projects
+  - Saved into `.data/projects.json`
+  - Uploaded/generated images are written to `public/uploads/projects/<project-id>`
 
-If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects like these step-by-step in a beginner-friendly manner!
+The app currently uses a Gemini-powered API route at `app/routes/api.generate-render.ts`.
 
-<a href="https://youtu.be/JiwTGGGIhDs" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/1736fca5-a031-4854-8c09-bc110e3bc16d" /></a>
+Important note:
 
-## <a name="introduction">✨ Introduction</a>
+- The Gemini image route is currently built around a preview/free-tier model and may hit quota or availability limits.
+- When that happens, the frontend shows an inline error instead of silently failing.
 
-AI-powered architectural visualization app built with React, TypeScript, and Gemini. Transform 2D floor plans into photorealistic 3D renders with local project persistence and a polished comparison workflow.
+## Routes
 
-If you're getting started and need assistance or face any bugs, join our active Discord community with over **50k+** members. It's a place where people help each other out.
+Main routes:
 
-<a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
+- `/` - homepage with upload flow and project gallery
+- `/visualizer/:id` - project detail page with before/after comparison
+- `/pricing` - marketing page
+- `/community` - marketing page
+- `/enterprise` - marketing page
 
-## <a name="tech-stack">⚙️ Tech Stack</a>
-- **[React](https://react.dev/)** is a popular JavaScript library for building user interfaces, specifically for creating single-page applications with a component-based architecture.
+Internal routes:
 
-- **[Vite](https://vitejs.dev/)** is a next-generation frontend tool that provides an extremely fast development environment and optimized build process for modern web projects.
+- `/api/generate-render` - image generation endpoint
+- `/api/projects/save` - save a project
+- `/api/projects/list` - list stored projects
+- `/api/projects/get?id=...` - fetch one stored project
 
-- **[TypeScript](https://www.typescriptlang.org/)** is a strongly typed superset of JavaScript that adds static types, helping developers catch errors early and write more maintainable code.
+## Project Structure
 
-- **[TailwindCSS](https://tailwindcss.com/)** is a utility-first CSS framework that allows for rapid UI development by applying pre-defined classes directly in your markup.
-
-- **[Gemini API](https://ai.google.dev/gemini-api/docs/image-generation)** powers the image generation flow with Google's image-generation models running on the server.
-
-- **[CodeRabbit](https://jsm.dev/roomify-coderabbit)** is an AI-powered code review platform that provides deep insights and automated suggestions to improve code quality and security.
-
-- **[Junie by JetBRains](https://jsm.dev/roomify-junie)** is an AI-driven coding assistant integrated into the development environment to help automate complex logic, refactoring, and prompt engineering.
-
-- **[Gemini 2.0 Flash Preview Image Generation](https://ai.google.dev/gemini-api/docs/image-generation)** is used for MVP image generation in the server route.
-
-
-## <a name="features">🔋 Features</a>
-👉 **2D-to-3D Visualization**: Instant architectural rendering that transforms flat floor plans into photorealistic 3D models using state-of-the-art AI.
-
-👉 **Persistent Media Hosting**: Permanent file storage that generates public URLs for every upload and output, ensuring your renders are always accessible.
-
-👉 **Dynamic Project Gallery**: A personalized workspace that tracks your history of visualizations with instant loading and metadata persistence.
-
-👉 **Side-by-Side Comparison**: Interactive tools designed to visualize the direct transformation from a source architectural sketch to its AI-rendered counterpart.
-
-👉 **Global Community Feed**: A public discovery engine where users share their architectural projects with the world in a single click.
-
-👉 **Privacy Controls**: Granular public and private toggles that give users full authority over the visibility and security of their architectural data.
-
-👉 **Ownership Mapping**: A clean metadata system that tracks project details and user IDs across the entire platform for seamless account management.
-
-👉 **Modern Export Functionality**: High-performance tools to download and move AI-generated renders into real-world presentations and workflows.
-
-
-And many more, including code architecture and reusability.
-
-## <a name="quick-start">🤸 Quick Start</a>
-
-Follow these steps to set up the project locally on your machine.
-
-**Prerequisites**
-
-Make sure you have the following installed on your machine:
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en)
-- [npm](https://www.npmjs.com/) (Node Package Manager)
-
-**Cloning the Repository**
-
-```bash
-git clone https://github.com/adrianhajdin/roomify
-cd roomify
+```text
+app/
+  routes/
+    home.tsx
+    visualizer.$id.tsx
+    pricing.tsx
+    community.tsx
+    enterprise.tsx
+    api.generate-render.ts
+    api.projects.save.ts
+    api.projects.list.ts
+    api.projects.get.ts
+components/
+  Navbar.tsx
+  Footer.tsx
+  Upload.tsx
+  MarketingPage.tsx
+  ui/
+lib/
+  ai.action.ts
+  project.action.ts
+  featured-projects.ts
+  server/
+    project-store.ts
+public/
+  uploads/
+    assets/
+    projects/
 ```
 
-**Installation**
+## Getting Started
 
-Install the project dependencies using npm:
+### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-**Set Up Environment Variables**
+### 2. Add environment variables
 
-Create a new file named `.env.local` in the root of your project and add the following content:
+Create `.env.local` in the project root:
 
 ```env
-GEMINI_API_KEY=""
+GEMINI_API_KEY=your_google_ai_studio_key
 ```
 
-Replace the placeholder value with your real API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+Get your key from:
 
-**Running the Project**
+- [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+### 3. Run the app
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser to view the project.
+### 4. Open it
 
-## <a name="links">🔗 Assets</a>
+By default, open the local URL shown by React Router dev server.
 
-Assets and snippets used in the project can be found in the **[video kit](https://jsmastery.com/video-kit/ee3ef6c2-95f4-4992-a3ea-5edd4ac3ca7c)**.
+## Available Scripts
 
-<a href="https://jsmastery.com/video-kit/ee3ef6c2-95f4-4992-a3ea-5edd4ac3ca7c" target="_blank">
-  <img src="public/readme/readme-videokit.webp" alt="Video Kit Banner">
-</a>
+```bash
+npm run dev
+```
 
-## <a name="more">🚀 More</a>
+Starts the local development server.
 
-**Advance your skills with Next.js Pro Course**
+```bash
+npm run typecheck
+```
 
-Enjoyed creating this project? Dive deeper into our PRO courses for a richer learning adventure. They're packed with
-detailed explanations, cool features, and exercises to boost your skills. Give it a go!
+Runs React Router type generation and TypeScript checks.
 
-<a href="https://jsm.dev/roomify-jsm" target="_blank">
-  <img src="public/readme/readme-jsmpro.webp" alt="Project Banner">
-</a>
+```bash
+npm run build
+```
+
+Builds the client and server bundles.
+
+```bash
+npm run start
+```
+
+Runs the built server from `build/server/index.js`.
+
+## How Local Persistence Works
+
+When a project is saved:
+
+- metadata is written to `.data/projects.json`
+- source and rendered images are written under `public/uploads/projects/<project-id>`
+
+Because of that:
+
+- `.data` should not be treated as durable production storage
+- `public/uploads` will grow over time in local development
+- generated/demo assets are served directly by the app
+
+## Known Limitations
+
+- Gemini preview/free-tier image generation can be rate-limited or unavailable
+- project storage is currently file-based, not database-backed
+- project writes are local-only and meant for MVP/dev usage
+- the homepage still includes some demo/sample content rather than only live generated projects
+
+## Design Notes
+
+The current UI includes:
+
+- a homepage with an upload CTA and project gallery
+- standalone marketing pages for Pricing, Community, and Enterprise
+- a dedicated case-study style detail page with comparison slider
+- a simplified footer and navigation system
+
+## Suggested Next Improvements
+
+- add server-side image size/type validation for `/api/generate-render`
+- make local project writes atomic to avoid race conditions
+- replace JSON storage with a database or hosted backend
+- add proper auth if the app moves beyond local/demo use
+- improve metadata and SEO for all public pages
+
+## Assets
+
+Featured demo assets currently used by the homepage gallery:
+
+- `public/uploads/assets/floor.webp`
+- `public/uploads/assets/floor-gen.png`
+- `public/uploads/assets/apartment.webp`
+- `public/uploads/assets/apart-gen.png`
+- `public/uploads/assets/room.jpeg`
+- `public/uploads/assets/room-gen.png`
+
+## License
+
+Private project. Add a formal license if you plan to distribute it.
