@@ -11,8 +11,12 @@ import { FEATURED_PROJECTS } from "../../lib/featured-projects";
 
 export function meta({}: Route.MetaArgs) {
   return [
-    { title: "New React Router App" },
-    { name: "description", content: "Welcome to React Router!" },
+    { title: "Strux" },
+    {
+      name: "description",
+      content:
+        "AI-first design environment to visualize, render, and ship architectural projects from floor plans.",
+    },
   ];
 }
 

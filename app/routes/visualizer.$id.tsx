@@ -5,6 +5,11 @@ import {Box, Download, RefreshCcw, Share2, X} from "lucide-react";
 import Button from "../../components/ui/Button";
 import {createProject, getProjectById} from "../../lib/project.action";
 import {ReactCompareSlider, ReactCompareSliderImage} from "react-compare-slider";
+import type { Route } from "./+types/visualizer.$id";
+
+export function meta({}: Route.MetaArgs) {
+ return [{ title: "Visualizer | Strux" }];
+}
 
 const VisualizerId = () => {
     const { id } = useParams();
