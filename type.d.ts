@@ -15,6 +15,7 @@ interface Material {
 interface DesignItem {
     id: string;
     name?: string | null;
+    description?: string | null;
     sourceImage: string;
     sourcePath?: string | null;
     renderedImage?: string | null;
@@ -68,8 +69,13 @@ interface VisualizerProps {
 }
 
 interface UploadProps {
-    onComplete: (base64File: string) => Promise<boolean | void> | boolean | void;
+    onComplete?: (payload: UploadCompletePayload) => Promise<boolean | void> | boolean | void;
     className?: string;
+}
+
+interface UploadCompletePayload {
+    sourceImage: string;
+    renderedImage: string;
 }
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

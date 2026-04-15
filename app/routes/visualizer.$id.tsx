@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 import {generate3DView} from "../../lib/ai.action";
 import {Box, Download, RefreshCcw, Share2, X} from "lucide-react";
 import Button from "../../components/ui/Button";
-import {createProject, getProjectById} from "../../lib/puter.action";
+import {createProject, getProjectById} from "../../lib/project.action";
 import {ReactCompareSlider, ReactCompareSliderImage} from "react-compare-slider";
 
 const VisualizerId = () => {
@@ -129,7 +129,7 @@ const VisualizerId = () => {
                         <div className="panel-meta">
                             <p>Project</p>
                             <h2>{project?.name || `Residence ${id}`}</h2>
-                            <p className="note">Created by You</p>
+                            <p className="note">{project?.sharedBy ? `Curated by ${project.sharedBy}` : "Created by You"}</p>
                         </div>
 
                         <div className="panel-actions">
@@ -170,6 +170,20 @@ const VisualizerId = () => {
                         )}
                     </div>
 
+                    <div className="project-details">
+                        <div className="detail-card">
+                            <span className="label">Overview</span>
+                            <p>
+                                {project?.description || "A generated architectural visualization derived from the uploaded floor plan."}
+                            </p>
+                        </div>
+
+                        <div className="detail-card">
+                            <span className="label">Experience</span>
+                            <p>{currentImage ? "Before and after comparison ready" : "Render preview loading"}</p>
+                        </div>
+                    </div>
+
                 </div>
 
                 <div className="panel compare">
@@ -190,7 +204,7 @@ const VisualizerId = () => {
                                     <ReactCompareSliderImage src={project?.sourceImage} alt="before" className="compare-img" />
                                 }
                                 itemTwo={
-                                    <ReactCompareSliderImage src={currentImage || project?.renderedImage} alt="after" className="compare-img" />
+                                    <ReactCompareSliderImage src={currentImage} alt="after" className="compare-img" />
                                 }
                             />
                         ) : (

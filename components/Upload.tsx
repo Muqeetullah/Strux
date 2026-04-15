@@ -1,68 +1,81 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import {useOutletContext} from "react-router";
-import {CheckCircle2, ImageIcon, UploadIcon} from "lucide-react";
-import {PROGRESS_INCREMENT, REDIRECT_DELAY_MS, PROGRESS_INTERVAL_MS} from "../lib/constants";
-
-interface UploadProps {
-    onComplete?: (base64Data: string) => void;
-}
+import {AlertCircle, CheckCircle2, ImageIcon, LoaderCircle, Sparkles, UploadIcon} from "lucide-react";
+import {generate3DView} from "../lib/ai.action";
+import Button from "./ui/Button";
 
 const Upload = ({ onComplete }: UploadProps) => {
-    const [file, setFile] = useState<File | null>(null);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
-    const [progress, setProgress] = useState(0);
-    const intervalRef = useRef<NodeJS.Timeout | null>(null);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     const { isSignedIn } = useOutletContext<AuthContext>();
 
     useEffect(() => {
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-                intervalRef.current = null;
-            }
-            if (timeoutRef.current) {
-                clearTimeout(timeoutRef.current);
-                timeoutRef.current = null;
+            if (previewImage) {
+                URL.revokeObjectURL(previewImage);
             }
         };
-    }, []);
+    }, [previewImage]);
+
+    const fileToBase64 = useCallback((file: File) => new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onerror = () => reject(new Error("Failed to read file"));
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+    }), []);
 
     const processFile = useCallback((file: File) => {
         if (!isSignedIn) return;
 
-        setFile(file);
-        setProgress(0);
+        setPreviewImage((currentPreview) => {
+            if (currentPreview) {
+                URL.revokeObjectURL(currentPreview);
+            }
 
-        const reader = new FileReader();
-        reader.onerror = () => {
-            setFile(null);
-            setProgress(0);
-        };
-        reader.onloadend = () => {
-            const base64Data = reader.result as string;
+            return URL.createObjectURL(file);
+        });
+        setUploadedFile(file);
+        setGeneratedImage(null);
+        setError(null);
+    }, [isSignedIn]);
 
-            intervalRef.current = setInterval(() => {
-                setProgress((prev) => {
-                    const next = prev + PROGRESS_INCREMENT;
-                    if (next >= 100) {
-                        if (intervalRef.current) {
-                            clearInterval(intervalRef.current);
-                            intervalRef.current = null;
-                        }
-                        timeoutRef.current = setTimeout(() => {
-                            onComplete?.(base64Data);
-                            timeoutRef.current = null;
-                        }, REDIRECT_DELAY_MS);
-                        return 100;
-                    }
-                    return next;
-                });
-            }, PROGRESS_INTERVAL_MS);
-        };
-        reader.readAsDataURL(file);
-    }, [isSignedIn, onComplete]);
+    const handleGenerate = useCallback(async () => {
+        if (!uploadedFile || loading) return;
+
+        try {
+            setLoading(true);
+            setError(null);
+            setGeneratedImage(null);
+
+            const sourceImage = await fileToBase64(uploadedFile);
+            const result = await generate3DView({ sourceImage });
+
+            if (!result.renderedImage) {
+                throw new Error("No render was returned");
+            }
+
+            setGeneratedImage(result.renderedImage);
+            await onComplete?.({
+                sourceImage,
+                renderedImage: result.renderedImage,
+            });
+        } catch (generationError) {
+            console.error(generationError);
+            setError(
+                generationError instanceof Error
+                    ? generationError.message
+                    : "We couldn't generate a render right now. Please try again.",
+            );
+        } finally {
+            setLoading(false);
+        }
+    }, [fileToBase64, loading, onComplete, uploadedFile]);
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -98,7 +111,7 @@ const Upload = ({ onComplete }: UploadProps) => {
 
     return (
         <div className="upload">
-            {!file ? (
+            {!uploadedFile ? (
                 <div
                     className={`dropzone ${isDragging ? 'is-dragging' : ''}`}
                     onDragOver={handleDragOver}
@@ -120,32 +133,79 @@ const Upload = ({ onComplete }: UploadProps) => {
                         <p>
                             {isSignedIn ? (
                                 "Click to upload or just drag and drop"
-                            ): ("Sign in or sign up with Puter to upload")}
+                            ): ("Uploads are currently unavailable")}
                         </p>
                         <p className="help">Maximum file size 50 MB.</p>
                     </div>
                 </div>
             ) : (
-                <div className="upload-status">
-                    <div className="status-content">
-                        <div className="status-icon">
-                            {progress === 100 ? (
-                                <CheckCircle2 className="check" />
-                            ): (
-                                <ImageIcon className="image" />
+                <div className="upload-flow">
+                    <div className="upload-status">
+                        <div className="status-content">
+                            {previewImage && (
+                                <div className="selected-preview">
+                                    <img
+                                        src={previewImage}
+                                        alt="Uploaded floor plan preview"
+                                        className="selected-preview-image"
+                                    />
+                                </div>
                             )}
-                        </div>
 
-                        <h3>{file.name}</h3>
+                            <div className="status-icon">
+                                {generatedImage ? (
+                                    <CheckCircle2 className="check" />
+                                ): loading ? (
+                                    <LoaderCircle className="spinner" />
+                                ) : (
+                                    <ImageIcon className="image" />
+                                )}
+                            </div>
 
-                        <div className='progress'>
-                            <div className="bar" style={{ width: `${progress}%` }} />
+                            <h3>{uploadedFile.name}</h3>
 
                             <p className="status-text">
-                                {progress < 100 ? 'Analyzing Floor Plan...' : 'Redirecting...'}
+                                {loading
+                                    ? 'Generating photorealistic render...'
+                                    : generatedImage
+                                        ? 'Render ready'
+                                        : 'Floor plan ready for generation'}
                             </p>
+
+                            <div className="status-actions">
+                                <Button
+                                    type="button"
+                                    size="md"
+                                    onClick={handleGenerate}
+                                    disabled={loading}
+                                    className="generate-btn"
+                                >
+                                    {loading ? (
+                                        <>
+                                            <LoaderCircle className="w-4 h-4 animate-spin" /> Generating
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Sparkles className="w-4 h-4" /> Generate Render
+                                        </>
+                                    )}
+                                </Button>
+                            </div>
                         </div>
                     </div>
+
+                    {error && (
+                        <div className="upload-error" role="alert">
+                            <AlertCircle size={16} />
+                            <span>{error}</span>
+                        </div>
+                    )}
+
+                    {generatedImage && (
+                        <div className="generated-result fade-in">
+                            <img src={generatedImage} alt="Generated architectural render" className="generated-image" />
+                        </div>
+                    )}
                 </div>
             )}
         </div>

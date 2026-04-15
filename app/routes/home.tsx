@@ -1,11 +1,13 @@
 import type { Route } from "./+types/home";
 import Navbar from "../../components/Navbar";
+import Footer from "../../components/Footer";
 import {ArrowRight, ArrowUpRight, Clock, Layers} from "lucide-react";
 import Button from "../../components/ui/Button";
 import Upload from "../../components/Upload";
 import {useNavigate} from "react-router";
 import {useEffect, useRef, useState} from "react";
-import {createProject, getProjects} from "../../lib/puter.action";
+import {createProject, getProjects} from "../../lib/project.action";
+import { FEATURED_PROJECTS } from "../../lib/featured-projects";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -19,7 +21,7 @@ export default function Home() {
     const [projects, setProjects] = useState<DesignItem[]>([]);
     const isCreatingProjectRef = useRef(false);
 
-    const handleUploadComplete = async (base64Image: string) => {
+    const handleUploadComplete = async ({ sourceImage, renderedImage }: UploadCompletePayload) => {
         try {
 
             if(isCreatingProjectRef.current) return false;
@@ -28,8 +30,8 @@ export default function Home() {
             const name = `Residence ${newId}`;
 
             const newItem = {
-                id: newId, name, sourceImage: base64Image,
-                renderedImage: undefined,
+                id: newId, name, sourceImage,
+                renderedImage,
                 timestamp: Date.now()
             }
 
@@ -41,14 +43,6 @@ export default function Home() {
             }
 
             setProjects((prev) => [saved, ...prev]);
-
-            navigate(`/visualizer/${newId}`, {
-                state: {
-                    initialImage: saved.sourceImage,
-                    initialRendered: saved.renderedImage || null,
-                    name
-                }
-            });
 
             return true;
         } finally {
@@ -123,6 +117,41 @@ export default function Home() {
                   </div>
 
                   <div className="projects-grid">
+                      {FEATURED_PROJECTS.map(({id, name, renderedImage, timestamp, sharedBy}) => (
+                          <div
+                              key={id}
+                              className="project-card project-card--featured group"
+                              onClick={() => navigate(`/visualizer/${id}`)}
+                          >
+                              <div className="preview">
+                                  <img src={renderedImage || undefined} alt={`${name} thumbnail`} />
+
+                                  <div className="badge">
+                                      <span>Featured</span>
+                                  </div>
+
+                                  <div className="preview-hint">
+                                      <span>Open Case Study</span>
+                                  </div>
+                              </div>
+
+                              <div className="card-body">
+                                  <div>
+                                      <h3>{name}</h3>
+
+                                      <div className="meta">
+                                          <Clock size={12} />
+                                          <span>{new Date(timestamp).toLocaleDateString()}</span>
+                                          <span>By {sharedBy}</span>
+                                      </div>
+                                  </div>
+                                  <div className="arrow">
+                                      <ArrowUpRight size={18} />
+                                  </div>
+                              </div>
+                          </div>
+                      ))}
+
                       {projects.map(({id, name, renderedImage, sourceImage, timestamp}) => (
                           <div key={id} className="project-card group" onClick={() => navigate(`/visualizer/${id}`)}>
                               <div className="preview">
@@ -153,6 +182,8 @@ export default function Home() {
                   </div>
               </div>
           </section>
+
+          <Footer />
       </div>
   )
 }

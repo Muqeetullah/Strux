@@ -1,6 +1,3 @@
-import puter from "@heyputer/puter.js";
-import {STRUX_RENDER_PROMPT} from "./constants";
-
 export const fetchAsDataUrl = async (url: string): Promise<string> => {
   const response = await fetch(url);
 
@@ -22,26 +19,25 @@ export const generate3DView = async ({ sourceImage }: Generate3DViewParams) => {
     const dataUrl = sourceImage.startsWith('data:')
         ? sourceImage
         : await fetchAsDataUrl(sourceImage);
-
-    const base64Data = dataUrl.split(',')[1];
-    const mimeType = dataUrl.split(';')[0].split(':')[1];
-
-    if(!mimeType || !base64Data) throw new Error('Invalid source image payload');
-
-    const response = await puter.ai.txt2img(STRUX_RENDER_PROMPT, {
-        provider: "gemini",
-        model: "gemini-2.5-flash-image-preview",
-        input_image: base64Data,
-        input_image_mime_type: mimeType,
-        ratio: { w: 1024, h: 1024 },
+    const response = await fetch("/api/generate-render", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            image: dataUrl,
+        }),
     });
 
-    const rawImageUrl = (response as HTMLImageElement).src ?? null;
+    const payload = (await response.json()) as { image?: string; error?: string };
 
-    if (!rawImageUrl) return { renderedImage: null, renderedPath: undefined };
+    if (!response.ok || !payload.image) {
+        throw new Error(payload.error || "Generation failed");
+    }
 
-    const renderedImage = rawImageUrl.startsWith('data:')
-    ? rawImageUrl : await fetchAsDataUrl(rawImageUrl);
+    const renderedImage = payload.image.startsWith("data:")
+        ? payload.image
+        : await fetchAsDataUrl(payload.image);
 
     return { renderedImage, renderedPath: undefined };
 }
