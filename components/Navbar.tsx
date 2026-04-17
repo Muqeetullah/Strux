@@ -15,9 +15,9 @@ const Navbar = () => {
                     </Link>
 
                     <ul className="links">
-                        <Link to="/pricing">Pricing</Link>
-                        <Link to="/community">Community</Link>
-                        <Link to="/enterprise">Enterprise</Link>
+                        <li><Link to="/pricing">Pricing</Link></li>
+                        <li><Link to="/community">Community</Link></li>
+                        <li><Link to="/enterprise">Enterprise</Link></li>
                     </ul>
                 </div>
 

@@ -2,6 +2,8 @@ import { type ActionFunctionArgs } from "react-router";
 import { STRUX_RENDER_PROMPT } from "../../lib/constants";
 
 const GEMINI_IMAGE_MODEL = "gemini-2.0-flash-preview-image-generation";
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const parseDataUrl = (dataUrl: string) => {
     const match = dataUrl.match(/^data:(.+);base64,(.+)$/);
@@ -106,6 +108,16 @@ export async function action({ request }: ActionFunctionArgs) {
         }
 
         const { mimeType, data } = parseDataUrl(image);
+
+        if (!ALLOWED_IMAGE_TYPES.has(mimeType)) {
+            return Response.json({ error: "Only JPG, PNG, and WebP images are supported." }, { status: 400 });
+        }
+
+        const imageBytes = Buffer.byteLength(data, "base64");
+
+        if (imageBytes > MAX_IMAGE_BYTES) {
+            return Response.json({ error: "Image exceeds the 10MB upload limit." }, { status: 413 });
+        }
 
         const response = await fetch(
             `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_IMAGE_MODEL}:generateContent`,

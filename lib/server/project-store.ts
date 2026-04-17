@@ -1,16 +1,23 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const DATA_DIR = path.join(process.cwd(), ".data");
+const STORAGE_ROOT = process.env.VERCEL ? path.join("/tmp", "strux") : process.cwd();
+const DATA_DIR = path.join(STORAGE_ROOT, ".data");
 const PROJECTS_FILE = path.join(DATA_DIR, "projects.json");
 const UPLOADS_DIR = path.join(process.cwd(), "public", "uploads", "projects");
+const canWritePublicUploads = !process.env.VERCEL;
+let writeQueue = Promise.resolve();
 
 const ensureDir = async (dirPath: string) => {
     await mkdir(dirPath, { recursive: true });
 };
 
 const ensureStorage = async () => {
-    await Promise.all([ensureDir(DATA_DIR), ensureDir(UPLOADS_DIR)]);
+    await ensureDir(DATA_DIR);
+
+    if (canWritePublicUploads) {
+        await ensureDir(UPLOADS_DIR);
+    }
 };
 
 const parseProjects = async (): Promise<DesignItem[]> => {
@@ -64,6 +71,7 @@ const storeImage = async ({
 }) => {
     if (!input) return null;
     if (input.startsWith("/uploads/")) return input;
+    if (!canWritePublicUploads) return input;
 
     let contentType = "";
     let buffer: Buffer | null = null;
@@ -107,29 +115,35 @@ export const getProject = async (id: string) => {
 };
 
 export const saveProject = async (project: DesignItem) => {
-    const projects = await parseProjects();
+    const nextWrite = writeQueue.then(async () => {
+        const projects = await parseProjects();
 
-    const storedProject: DesignItem = {
-        ...project,
-        ownerId: project.ownerId ?? "local-user",
-        sourceImage: await storeImage({
-            input: project.sourceImage,
-            projectId: project.id,
-            label: "source",
-        }) || project.sourceImage,
-        renderedImage: project.renderedImage
-            ? await storeImage({
-                input: project.renderedImage,
+        const storedProject: DesignItem = {
+            ...project,
+            ownerId: project.ownerId ?? "local-user",
+            sourceImage: await storeImage({
+                input: project.sourceImage,
                 projectId: project.id,
-                label: "rendered",
-            }) || project.renderedImage
-            : null,
-    };
+                label: "source",
+            }) || project.sourceImage,
+            renderedImage: project.renderedImage
+                ? await storeImage({
+                    input: project.renderedImage,
+                    projectId: project.id,
+                    label: "rendered",
+                }) || project.renderedImage
+                : null,
+        };
 
-    const nextProjects = projects.filter(({ id }) => id !== storedProject.id);
-    nextProjects.unshift(storedProject);
+        const nextProjects = projects.filter(({ id }) => id !== storedProject.id);
+        nextProjects.unshift(storedProject);
 
-    await writeProjects(nextProjects);
+        await writeProjects(nextProjects);
 
-    return storedProject;
+        return storedProject;
+    });
+
+    writeQueue = nextWrite.then(() => undefined, () => undefined);
+
+    return nextWrite;
 };
