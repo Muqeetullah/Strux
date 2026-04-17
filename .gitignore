@@ -1,5 +1,5 @@
 .env.local
 .data
-public/uploads
+
 build
 node_modules
